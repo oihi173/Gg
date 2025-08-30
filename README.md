@@ -1,48 +1,86 @@
--- Coloque este script dentro de um ScreenGui no StarterGui
-
+-- StarterGui > LocalScript
 local player = game.Players.LocalPlayer
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
-local camera = workspace.CurrentCamera
 
+local gui = Instance.new("ScreenGui")
+gui.Name = "PainelCustom"
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+-- Botão Abrir (⚪)
+local abrirBtn = Instance.new("TextButton")
+abrirBtn.Size = UDim2.new(0, 40, 0, 40)
+abrirBtn.Position = UDim2.new(0, 10, 0, 200)
+abrirBtn.Text = "O"
+abrirBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+abrirBtn.TextScaled = true
+abrirBtn.Parent = gui
+
+-- Painel
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 250, 0, 200)
+frame.Position = UDim2.new(0.3, 0, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+frame.Active = true
+frame.Visible = false
+frame.Parent = gui
+
+-- Botão Fechar (❌)
+local fecharBtn = Instance.new("TextButton")
+fecharBtn.Size = UDim2.new(0, 30, 0, 30)
+fecharBtn.Position = UDim2.new(1, -35, 0, 5)
+fecharBtn.Text = "X"
+fecharBtn.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+fecharBtn.TextScaled = true
+fecharBtn.Parent = frame
+
+-- Abrir/Fechar
+abrirBtn.MouseButton1Click:Connect(function()
+	frame.Visible = true
+	abrirBtn.Visible = false
+end)
+
+fecharBtn.MouseButton1Click:Connect(function()
+	frame.Visible = false
+	abrirBtn.Visible = true
+end)
+
+-- 🔹 Sistema de arrastar (substitui Draggable)
 local UserInputService = game:GetService("UserInputService")
 
--- Criar botão
-local screenGui = script.Parent
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0, 150, 0, 50)
-button.Position = UDim2.new(0.05, 0, 0.8, 0)
-button.Text = "Ativar Modo Reto"
-button.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
-button.TextColor3 = Color3.fromRGB(255,255,255)
-button.Parent = screenGui
+local dragging, dragInput, dragStart, startPos
 
--- Variável para ativar/desativar
-local ativo = false
+local function update(input)
+	local delta = input.Position - dragStart
+	frame.Position = UDim2.new(
+		startPos.X.Scale,
+		startPos.X.Offset + delta.X,
+		startPos.Y.Scale,
+		startPos.Y.Offset + delta.Y
+	)
+end
 
--- Função que mantém o personagem reto
-game:GetService("RunService").RenderStepped:Connect(function()
-	if ativo and character and character:FindFirstChild("HumanoidRootPart") then
-		local lookVector = camera.CFrame.LookVector
-		local newCFrame = CFrame.new(character.HumanoidRootPart.Position, character.HumanoidRootPart.Position + Vector3.new(lookVector.X, 0, lookVector.Z))
-		character.HumanoidRootPart.CFrame = CFrame.new(character.HumanoidRootPart.Position) * CFrame.Angles(0, math.atan2(-lookVector.X, -lookVector.Z), 0)
+frame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = frame.Position
+
+		input.Changed:Connect(function()
+			if input.UserInputState == Enum.UserInputState.End then
+				dragging = false
+			end
+		end)
 	end
 end)
 
--- Botão para ativar/desativar
-button.MouseButton1Click:Connect(function()
-	ativo = not ativo
-	if ativo then
-		button.Text = "Desativar Modo Reto"
-		button.BackgroundColor3 = Color3.fromRGB(250, 100, 100)
-	else
-		button.Text = "Ativar Modo Reto"
-		button.BackgroundColor3 = Color3.fromRGB(50, 150, 250)
+frame.InputChanged:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseMovement then
+		dragInput = input
 	end
 end)
 
--- Garante que funcione mesmo se o player morrer e renascer
-player.CharacterAdded:Connect(function(char)
-	character = char
-	humanoid = char:WaitForChild("Humanoid")
+UserInputService.InputChanged:Connect(function(input)
+	if input == dragInput and dragging then
+		update(input)
+	end
 end)
