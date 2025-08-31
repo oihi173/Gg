@@ -1,50 +1,102 @@
--- Criar a interface
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "TeleportPanel"
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-ScreenGui.ResetOnSpawn = false
+loadstring([[
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
--- Função de teleporte
-local function teleportTo(position)
-    local character = game.Players.LocalPlayer.Character
-    if character and character:FindFirstChild("HumanoidRootPart") then
-        character:MoveTo(position)
-    end
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "MobilePanelGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0.8, 0, 0.6, 0)
+mainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+mainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = screenGui
+
+local corner = Instance.new("UICorner", mainFrame)
+corner.CornerRadius = UDim.new(0, 10)
+
+local headPetBtn = Instance.new("TextButton")
+headPetBtn.Name = "HeadPetButton"
+headPetBtn.Size = UDim2.new(0.5, 0, 0.12, 0)
+headPetBtn.Position = UDim2.new(0, 0, 0, 0)
+headPetBtn.Text = "Head/Pet"
+headPetBtn.Font = Enum.Font.GothamBold
+headPetBtn.TextSize = 18
+headPetBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+headPetBtn.TextColor3 = Color3.new(1,1,1)
+headPetBtn.Parent = mainFrame
+
+local rushPartBtn = Instance.new("TextButton")
+rushPartBtn.Name = "RushPartButton"
+rushPartBtn.Size = UDim2.new(0.5, 0, 0.12, 0)
+rushPartBtn.Position = UDim2.new(0.5, 0, 0, 0)
+rushPartBtn.Text = "Rush Part"
+rushPartBtn.Font = Enum.Font.GothamBold
+rushPartBtn.TextSize = 18
+rushPartBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+rushPartBtn.TextColor3 = Color3.new(1,1,1)
+rushPartBtn.Parent = mainFrame
+
+local headPetPage = Instance.new("Frame")
+headPetPage.Name = "HeadPetPage"
+headPetPage.Size = UDim2.new(1, 0, 0.88, 0)
+headPetPage.Position = UDim2.new(0, 0, 0.12, 0)
+headPetPage.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+headPetPage.Visible = true
+headPetPage.Parent = mainFrame
+
+local rushPartPage = Instance.new("Frame")
+rushPartPage.Name = "RushPartPage"
+rushPartPage.Size = UDim2.new(1, 0, 0.88, 0)
+rushPartPage.Position = UDim2.new(0, 0, 0.12, 0)
+rushPartPage.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+rushPartPage.Visible = false
+rushPartPage.Parent = mainFrame
+
+local label1 = Instance.new("TextLabel")
+label1.Text = "Lista de Pets"
+label1.Size = UDim2.new(1, 0, 0.2, 0)
+label1.BackgroundTransparency = 1
+label1.TextColor3 = Color3.new(1,1,1)
+label1.Font = Enum.Font.Gotham
+label1.TextSize = 20
+label1.Parent = headPetPage
+
+local label2 = Instance.new("TextLabel")
+label2.Text = "Funções de Rush"
+label2.Size = UDim2.new(1, 0, 0.2, 0)
+label2.BackgroundTransparency = 1
+label2.TextColor3 = Color3.new(1,1,1)
+label2.Font = Enum.Font.Gotham
+label2.TextSize = 20
+label2.Parent = rushPartPage
+
+local function showPage(page)
+	if page == "HeadPet" then
+		headPetPage.Visible = true
+		rushPartPage.Visible = false
+	elseif page == "RushPart" then
+		headPetPage.Visible = false
+		rushPartPage.Visible = true
+	end
 end
 
--- Dados dos botões e posições
-local teleportPoints = {
-    {name = "Condenada 1", position = Vector3.new(-190.56, 3.86, 1424.11)},
-    {name = "Condenada 2", position = Vector3.new(-206.71, 5, 2562.09)}, -- Valor Y assumido
-    {name = "Condenada 3", position = Vector3.new(197.24, 35.66, 3309.48)},
-    {name = "Condenada 4", position = Vector3.new(56.11, -32557, 9481.89)},
-}
+headPetBtn.MouseButton1Click:Connect(function()
+	showPage("HeadPet")
+	headPetBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+	rushPartBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+end)
 
--- Criar painel e botões
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 200, 0, 250)
-frame.Position = UDim2.new(0, 10, 0.5, -125)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BorderSizePixel = 0
-frame.Parent = ScreenGui
+rushPartBtn.MouseButton1Click:Connect(function()
+	showPage("RushPart")
+	headPetBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+	rushPartBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+end)
 
--- Layout dos botões
-local layout = Instance.new("UIListLayout")
-layout.Parent = frame
-layout.Padding = UDim.new(0, 10)
-
--- Criar botões
-for _, data in ipairs(teleportPoints) do
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -20, 0, 40)
-    btn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 18
-    btn.Text = data.name
-    btn.Parent = frame
-
-    btn.MouseButton1Click:Connect(function()
-        teleportTo(data.position)
-    end)
-end
+showPage("HeadPet")
+]])()
