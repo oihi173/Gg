@@ -1,49 +1,95 @@
---[[ 
-    oihi_17 hub - Script: el macho (versão mobile-friendly)
-    Auto Farm de Cavalos (simulado)
-    Criado para servidor privado
---]]
+local player = game.Players.LocalPlayer
+local PlayerGui = player:WaitForChild("PlayerGui")
+local TweenService = game:GetService("TweenService")
 
--- Interface do Hub
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "oihi_17_hub"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+-- Painel principal
+local panel = Instance.new("Frame")
+panel.Name = "TeleportPanel"
+panel.Size = UDim2.new(0, 220, 0, 220)
+panel.Position = UDim2.new(0, 20, 0, 100)
+panel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+panel.BackgroundTransparency = 0.1
+panel.BorderSizePixel = 0
+panel.Active = true
+panel.Draggable = true
+panel.Parent = PlayerGui
 
-local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0.3, 0, 0.15, 0) -- 30% da largura, 15% da altura da tela
-Frame.Position = UDim2.new(0.35, 0, 0.8, 0) -- parte inferior central
-Frame.AnchorPoint = Vector2.new(0.5, 0.5)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Frame.BackgroundTransparency = 0.1
-Frame.BorderSizePixel = 0
-Frame.Parent = ScreenGui
+-- Cantos arredondados
+local corner = Instance.new("UICorner", panel)
+corner.CornerRadius = UDim.new(0, 12)
 
-local FarmButton = Instance.new("TextButton")
-FarmButton.Size = UDim2.new(1, 0, 1, 0)
-FarmButton.Position = UDim2.new(0, 0, 0, 0)
-FarmButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-FarmButton.TextColor3 = Color3.new(1, 1, 1)
-FarmButton.Font = Enum.Font.GothamBold
-FarmButton.TextScaled = true
-FarmButton.Text = "AutoFarm Cavalos"
-FarmButton.Parent = Frame
+-- Layout para organização dos botões
+local layout = Instance.new("UIListLayout", panel)
+layout.Padding = UDim.new(0, 10)
+layout.FillDirection = Enum.FillDirection.Vertical
+layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+layout.VerticalAlignment = Enum.VerticalAlignment.Top
 
--- Auto Farm Lógica (Simulada)
-local farming = false
+-- Posições dos teleportes
+local teleportPositions = {
+	["Gui 1"] = {
+		position = Vector3.new(178.24, 3, -382.88),
+		icon = "rbxassetid://6034996695" -- mapa
+	},
+	["Gui 2"] = {
+		position = Vector3.new(-191.88, 33.95, -290.25),
+		icon = "rbxassetid://6035007858" -- ponte
+	},
+	["Gui 3"] = {
+		position = Vector3.new(-407.48, 65.96, -444.19),
+		icon = "rbxassetid://6034982914" -- montanha
+	}
+}
 
-local function startAutoFarm()
-    farming = not farming
-    FarmButton.Text = farming and "Parar AutoFarm" or "AutoFarm Cavalos"
+-- Som de clique (opcional)
+local clickSound = Instance.new("Sound", panel)
+clickSound.SoundId = "rbxassetid://12222242"
+clickSound.Volume = 0.5
 
-    while farming do
-        local horse = workspace:FindFirstChild("Cavalo") -- Exemplo
-        if horse then
-            print("Interagindo com:", horse.Name)
-            -- Aqui iria o FireServer verdadeiro se você souber o evento
-        end
-        wait(2)
-    end
+-- Criar botão com animação e ícone
+local function createButton(name, data)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(0, 200, 0, 50)
+	button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.Text = "   " .. name
+	button.Font = Enum.Font.GothamBold
+	button.TextSize = 18
+	button.AutoButtonColor = false
+	button.Parent = panel
+
+	local icon = Instance.new("ImageLabel", button)
+	icon.Size = UDim2.new(0, 24, 0, 24)
+	icon.Position = UDim2.new(0, 10, 0.5, -12)
+	icon.BackgroundTransparency = 1
+	icon.Image = data.icon
+
+	local corner = Instance.new("UICorner", button)
+	corner.CornerRadius = UDim.new(0, 8)
+
+	-- Feedback visual ao toque
+	button.MouseButton1Click:Connect(function()
+		clickSound:Play()
+
+		-- Efeito de clique
+		local tween = TweenService:Create(button, TweenInfo.new(0.1), {
+			BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+		})
+		tween:Play()
+		tween.Completed:Connect(function()
+			TweenService:Create(button, TweenInfo.new(0.2), {
+				BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+			}):Play()
+		end)
+
+		-- Teleporte
+		local character = player.Character or player.CharacterAdded:Wait()
+		local hrp = character:WaitForChild("HumanoidRootPart")
+		hrp.CFrame = CFrame.new(data.position + Vector3.new(0, 3, 0)) -- levanta um pouco
+	end)
 end
 
-FarmButton.MouseButton1Click:Connect(startAutoFarm)
+-- Criar todos os botões
+for name, data in pairs(teleportPositions) do
+	createButton(name, data)
+end
