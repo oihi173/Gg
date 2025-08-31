@@ -1,97 +1,49 @@
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+--[[ 
+    oihi_17 hub - Script: el macho (versão mobile-friendly)
+    Auto Farm de Cavalos (simulado)
+    Criado para servidor privado
+--]]
 
-local player = Players.LocalPlayer
-local playerGui = player:WaitForChild("PlayerGui")
+-- Interface do Hub
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "oihi_17_hub"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- GUI principal
-local screenGui = script.Parent
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0.3, 0, 0.15, 0) -- 30% da largura, 15% da altura da tela
+Frame.Position = UDim2.new(0.35, 0, 0.8, 0) -- parte inferior central
+Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+Frame.BackgroundTransparency = 0.1
+Frame.BorderSizePixel = 0
+Frame.Parent = ScreenGui
 
--- Lista de nomes das músicas no ReplicatedStorage
-local musicNames = {"Musica1", "Musica2", "Musica3"}
-local currentMusicIndex = 1
-local currentSound = nil
+local FarmButton = Instance.new("TextButton")
+FarmButton.Size = UDim2.new(1, 0, 1, 0)
+FarmButton.Position = UDim2.new(0, 0, 0, 0)
+FarmButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+FarmButton.TextColor3 = Color3.new(1, 1, 1)
+FarmButton.Font = Enum.Font.GothamBold
+FarmButton.TextScaled = true
+FarmButton.Text = "AutoFarm Cavalos"
+FarmButton.Parent = Frame
 
--- Criar Frame
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0.5, 0, 0.4, 0)
-frame.Position = UDim2.new(0.25, 0, 0.55, 0)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BorderSizePixel = 0
-frame.Parent = screenGui
+-- Auto Farm Lógica (Simulada)
+local farming = false
 
--- Título
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0.2, 0)
-title.Position = UDim2.new(0, 0, 0, 0)
-title.BackgroundTransparency = 1
-title.Text = "🎵 Painel de Música"
-title.TextScaled = true
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.SourceSansBold
-title.Parent = frame
+local function startAutoFarm()
+    farming = not farming
+    FarmButton.Text = farming and "Parar AutoFarm" or "AutoFarm Cavalos"
 
--- Criar botão reutilizável
-local function createButton(text, position, callback)
-	local button = Instance.new("TextButton")
-	button.Size = UDim2.new(0.3, 0, 0.25, 0)
-	button.Position = position
-	button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-	button.TextColor3 = Color3.new(1, 1, 1)
-	button.Font = Enum.Font.SourceSansBold
-	button.TextScaled = true
-	button.Text = text
-	button.Parent = frame
-	button.MouseButton1Click:Connect(callback)
+    while farming do
+        local horse = workspace:FindFirstChild("Cavalo") -- Exemplo
+        if horse then
+            print("Interagindo com:", horse.Name)
+            -- Aqui iria o FireServer verdadeiro se você souber o evento
+        end
+        wait(2)
+    end
 end
 
--- Função para tocar música atual
-local function playMusic()
-	-- Parar a música anterior, se existir
-	if currentSound then
-		currentSound:Stop()
-		currentSound:Destroy()
-	end
-
-	local soundName = musicNames[currentMusicIndex]
-	local soundTemplate = ReplicatedStorage:FindFirstChild(soundName)
-
-	if soundTemplate and soundTemplate:IsA("Sound") then
-		currentSound = soundTemplate:Clone()
-		currentSound.Parent = workspace
-		currentSound:Play()
-	end
-end
-
--- Função para parar música
-local function stopMusic()
-	if currentSound then
-		currentSound:Stop()
-		currentSound:Destroy()
-		currentSound = nil
-	end
-end
-
--- Próxima música
-local function nextMusic()
-	currentMusicIndex += 1
-	if currentMusicIndex > #musicNames then
-		currentMusicIndex = 1
-	end
-	playMusic()
-end
-
--- Música anterior
-local function previousMusic()
-	currentMusicIndex -= 1
-	if currentMusicIndex < 1 then
-		currentMusicIndex = #musicNames
-	end
-	playMusic()
-end
-
--- Criar botões
-createButton("▶️ Tocar", UDim2.new(0.05, 0, 0.3, 0), playMusic)
-createButton("⏹️ Parar", UDim2.new(0.35, 0, 0.3, 0), stopMusic)
-createButton("⏭️ Próxima", UDim2.new(0.65, 0, 0.3, 0), nextMusic)
-createButton("⏮️ Anterior", UDim2.new(0.35, 0, 0.6, 0), previousMusic)
+FarmButton.MouseButton1Click:Connect(startAutoFarm)
