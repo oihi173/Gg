@@ -1,16 +1,14 @@
--- LocalScript dentro de MusicGui
-
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- Criar GUI
+-- GUI principal
 local screenGui = script.Parent
 
--- Lista de músicas
-local musicNames = {"Musica1", "Musica2", "Musica3"} -- nomes dos objetos Sound no ReplicatedStorage
+-- Lista de nomes das músicas no ReplicatedStorage
+local musicNames = {"Musica1", "Musica2", "Musica3"}
 local currentMusicIndex = 1
 local currentSound = nil
 
@@ -22,7 +20,7 @@ frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Parent = screenGui
 
--- Criar título
+-- Título
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, 0, 0.2, 0)
 title.Position = UDim2.new(0, 0, 0, 0)
@@ -33,7 +31,7 @@ title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.SourceSansBold
 title.Parent = frame
 
--- Função para criar botão
+-- Criar botão reutilizável
 local function createButton(text, position, callback)
 	local button = Instance.new("TextButton")
 	button.Size = UDim2.new(0.3, 0, 0.25, 0)
@@ -47,9 +45,9 @@ local function createButton(text, position, callback)
 	button.MouseButton1Click:Connect(callback)
 end
 
--- Tocar música atual
+-- Função para tocar música atual
 local function playMusic()
-	-- Parar música atual se tiver
+	-- Parar a música anterior, se existir
 	if currentSound then
 		currentSound:Stop()
 		currentSound:Destroy()
@@ -57,6 +55,7 @@ local function playMusic()
 
 	local soundName = musicNames[currentMusicIndex]
 	local soundTemplate = ReplicatedStorage:FindFirstChild(soundName)
+
 	if soundTemplate and soundTemplate:IsA("Sound") then
 		currentSound = soundTemplate:Clone()
 		currentSound.Parent = workspace
@@ -64,21 +63,35 @@ local function playMusic()
 	end
 end
 
--- Criar botões
-createButton("▶️ Tocar", UDim2.new(0.05, 0, 0.3, 0), function()
-	playMusic()
-end)
-
-createButton("⏸️ Pausar", UDim2.new(0.35, 0, 0.3, 0), function()
-	if currentSound and currentSound.IsPlaying then
-		currentSound:Pause()
+-- Função para parar música
+local function stopMusic()
+	if currentSound then
+		currentSound:Stop()
+		currentSound:Destroy()
+		currentSound = nil
 	end
-end)
+end
 
-createButton("⏭️ Próxima", UDim2.new(0.65, 0, 0.3, 0), function()
+-- Próxima música
+local function nextMusic()
 	currentMusicIndex += 1
 	if currentMusicIndex > #musicNames then
 		currentMusicIndex = 1
 	end
 	playMusic()
-end)
+end
+
+-- Música anterior
+local function previousMusic()
+	currentMusicIndex -= 1
+	if currentMusicIndex < 1 then
+		currentMusicIndex = #musicNames
+	end
+	playMusic()
+end
+
+-- Criar botões
+createButton("▶️ Tocar", UDim2.new(0.05, 0, 0.3, 0), playMusic)
+createButton("⏹️ Parar", UDim2.new(0.35, 0, 0.3, 0), stopMusic)
+createButton("⏭️ Próxima", UDim2.new(0.65, 0, 0.3, 0), nextMusic)
+createButton("⏮️ Anterior", UDim2.new(0.35, 0, 0.6, 0), previousMusic)
