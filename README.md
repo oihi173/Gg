@@ -1,58 +1,37 @@
-local code = [[
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local UserInputService = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
+local scriptString = [[
+    local PixelData = {
+        {{255,0,0},{0,255,0},{0,0,255}},
+        {{255,255,0},{255,0,255},{0,255,255}},
+    }
+    
+    local blockSize = 1
+    local startPosition = Vector3.new(0,5,0)
+    local folder = Instance.new("Folder", workspace)
+    folder.Name = "PixelArt"
 
-local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
+    -- Criar GUI
+    local player = game.Players.LocalPlayer
+    local playerGui = player:WaitForChild("PlayerGui")
+    local screenGui = Instance.new("ScreenGui", playerGui)
+    screenGui.Name = "PaintGui"
 
--- Criar animação
-local animation = Instance.new("Animation")
-animation.AnimationId = "rbxassetid://2623795"
-local animationTrack = humanoid:LoadAnimation(animation)
+    local button = Instance.new("TextButton", screenGui)
+    button.Size = UDim2.new(0.3,0,0.1,0)
+    button.Position = UDim2.new(0.35,0,0.85,0)
+    button.Text = "Pintar Arte"
+    button.BackgroundColor3 = Color3.fromRGB(51,153,230)
+    button.Font = Enum.Font.GothamBold
+    button.TextSize = 24
 
-local animPlaying = false
-
--- Criar GUI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AnimationToggleGui"
-screenGui.ResetOnSpawn = false
-screenGui.Parent = player:WaitForChild("PlayerGui")
-
-local button = Instance.new("TextButton")
-button.Size = UDim2.new(0, 150, 0, 50)
-button.Position = UDim2.new(0.5, -75, 0.8, 0)
-button.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-button.TextColor3 = Color3.new(1,1,1)
-button.Text = "Iniciar animação"
-button.Font = Enum.Font.SourceSansBold
-button.TextScaled = true
-button.Parent = screenGui
-
--- Função para alternar animação e texto do botão
-local function toggleAnimation()
-    if animPlaying then
-        animationTrack:Stop()
-        animPlaying = false
-        button.Text = "Iniciar animação"
-    else
-        animationTrack:Play()
-        animPlaying = true
-        button.Text = "Parar animação"
-    end
-end
-
-button.MouseButton1Click:Connect(toggleAnimation)
-
--- Atualizar humanoid caso o personagem renasça
-player.CharacterAdded:Connect(function(char)
-    character = char
-    humanoid = character:WaitForChild("Humanoid")
-    animationTrack = humanoid:LoadAnimation(animation)
-    animPlaying = false
-    button.Text = "Iniciar animação"
-end)
-]]
-
-loadstring(code)()
+    button.MouseButton1Click:Connect(function()
+        folder:ClearAllChildren()
+        for y=1,#PixelData do
+            for x=1,#PixelData[y] do
+                local c = PixelData[y][x]
+                local color = Color3.fromRGB(c[1], c[2], c[3])
+                local part = Instance.new("Part")
+                part.Size = Vector3.new(blockSize, blockSize, blockSize)
+                part.Anchored = true
+                part.Position = startPosition + Vector3.new((x-1)*blockSize, 0, (y-1)*blockSize)
+                part.Color = color
+                part.Parent = folder
