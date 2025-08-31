@@ -1,99 +1,84 @@
-local UIS = game:GetService("UserInputService")
+-- LocalScript dentro de MusicGui
+
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
--- GUI principal
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "PainelMusica"
-screenGui.Parent = player:WaitForChild("PlayerGui")
+-- Criar GUI
+local screenGui = script.Parent
 
--- Painel Principal
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 300, 0, 400)
-mainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
-mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-mainFrame.Active = true
-mainFrame.Visible = false -- Começa fechado
-mainFrame.Parent = screenGui
+-- Lista de músicas
+local musicNames = {"Musica1", "Musica2", "Musica3"} -- nomes dos objetos Sound no ReplicatedStorage
+local currentMusicIndex = 1
+local currentSound = nil
 
--- Botão Abrir/Fechar
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0, 100, 0, 30)
-toggleButton.Position = UDim2.new(0, 10, 0, 10)
-toggleButton.Text = "Abrir Painel"
-toggleButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-toggleButton.Parent = screenGui
+-- Criar Frame
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0.5, 0, 0.4, 0)
+frame.Position = UDim2.new(0.25, 0, 0.55, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Parent = screenGui
 
--- Música
-local sound = Instance.new("Sound")
-sound.Name = "Musica"
-sound.Parent = screenGui
+-- Criar título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, 0, 0.2, 0)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "🎵 Painel de Música"
+title.TextScaled = true
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.SourceSansBold
+title.Parent = frame
 
--- Input de ID da música
-local musicInput = Instance.new("TextBox")
-musicInput.Size = UDim2.new(0, 260, 0, 30)
-musicInput.Position = UDim2.new(0, 20, 0, 20)
-musicInput.PlaceholderText = "Coloque o ID da música aqui"
-musicInput.Text = ""
-musicInput.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-musicInput.Parent = mainFrame
-
--- Botão de tocar música
-local playButton = Instance.new("TextButton")
-playButton.Size = UDim2.new(0, 100, 0, 30)
-playButton.Position = UDim2.new(0, 20, 0, 60)
-playButton.Text = "Tocar Música"
-playButton.BackgroundColor3 = Color3.fromRGB(60, 100, 60)
-playButton.Parent = mainFrame
-
--- Opções extras
-local options = {}
-local numOpcoes = 3
-for i = 1, numOpcoes do
-	local optionBtn = Instance.new("TextButton")
-	optionBtn.Size = UDim2.new(0, 240, 0, 30)
-	optionBtn.Position = UDim2.new(0, 30, 0, 110 + (i - 1) * 40)
-	optionBtn.Text = "Opção " .. i
-	optionBtn.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-	optionBtn.Parent = mainFrame
-
-	-- Emblema de desativado (X vermelho)
-	local emblema = Instance.new("ImageLabel")
-	emblema.Size = UDim2.new(0, 24, 0, 24)
-	emblema.Position = UDim2.new(1, -30, 0.5, -12)
-	emblema.BackgroundTransparency = 1
-	emblema.Image = "rbxassetid://6031091002" -- X vermelho
-	emblema.Visible = false
-	emblema.Parent = optionBtn
-
-	options[i] = {
-		button = optionBtn,
-		emblema = emblema,
-		ativo = true
-	}
-
-	-- Alternar opção
-	optionBtn.MouseButton1Click:Connect(function()
-		local opt = options[i]
-		opt.ativo = not opt.ativo
-		opt.emblema.Visible = not opt.ativo
-	end)
+-- Função para criar botão
+local function createButton(text, position, callback)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(0.3, 0, 0.25, 0)
+	button.Position = position
+	button.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.Font = Enum.Font.SourceSansBold
+	button.TextScaled = true
+	button.Text = text
+	button.Parent = frame
+	button.MouseButton1Click:Connect(callback)
 end
 
--- Abrir/Fechar painel
-local isOpen = false
-toggleButton.MouseButton1Click:Connect(function()
-	isOpen = not isOpen
-	mainFrame.Visible = isOpen
-	toggleButton.Text = isOpen and "Fechar Painel" or "Abrir Painel"
+-- Tocar música atual
+local function playMusic()
+	-- Parar música atual se tiver
+	if currentSound then
+		currentSound:Stop()
+		currentSound:Destroy()
+	end
+
+	local soundName = musicNames[currentMusicIndex]
+	local soundTemplate = ReplicatedStorage:FindFirstChild(soundName)
+	if soundTemplate and soundTemplate:IsA("Sound") then
+		currentSound = soundTemplate:Clone()
+		currentSound.Parent = workspace
+		currentSound:Play()
+	end
+end
+
+-- Criar botões
+createButton("▶️ Tocar", UDim2.new(0.05, 0, 0.3, 0), function()
+	playMusic()
 end)
 
--- Tocar música ao clicar
-playButton.MouseButton1Click:Connect(function()
-	local id = musicInput.Text
-	if id ~= "" then
-		sound:Stop()
-		sound.SoundId = "rbxassetid://" .. id
-		sound:Play()
+createButton("⏸️ Pausar", UDim2.new(0.35, 0, 0.3, 0), function()
+	if currentSound and currentSound.IsPlaying then
+		currentSound:Pause()
 	end
+end)
+
+createButton("⏭️ Próxima", UDim2.new(0.65, 0, 0.3, 0), function()
+	currentMusicIndex += 1
+	if currentMusicIndex > #musicNames then
+		currentMusicIndex = 1
+	end
+	playMusic()
 end)
