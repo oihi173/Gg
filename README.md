@@ -1,53 +1,168 @@
-loadstring([[
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Communication = ReplicatedStorage:WaitForChild("Communication")
-local Events = Communication:WaitForChild("Events")
+-- Roblox Lua Script: Teleport Panel with Open/Close & Drag
 
--- Criar GUI
-local player = game.Players.LocalPlayer
-local screenGui = Instance.new("ScreenGui", player.PlayerGui)
-screenGui.ResetOnSpawn = false
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
 
-local toggleBtn = Instance.new("TextButton", screenGui)
-toggleBtn.Size = UDim2.new(0, 150, 0, 50)
-toggleBtn.Position = UDim2.new(0.5, -75, 0.8, 0)
-toggleBtn.Text = "Ativar Farm"
-toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
-toggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleBtn.Font = Enum.Font.SourceSansBold
-toggleBtn.TextSize = 20
-toggleBtn.AutoButtonColor = true
-toggleBtn.Visible = true
-toggleBtn.Active = true
+-- GUI principal
+local gui = Instance.new("ScreenGui")
+gui.Name = "TeleportGUI"
+gui.ResetOnSpawn = false
+gui.IgnoreGuiInset = true
+gui.Parent = playerGui
 
--- Controle
-local ativo = false
+local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
-local function usarItem(item)
-    local args = {"Use", item}
-    Events:WaitForChild(""):FireServer(unpack(args))
+-- posições de teleporte
+local teleports = {
+    {name = "Condenada 1", pos = Vector3.new(4253.15, 29.67, -6964.59)},
+    {name = "Condenada 2", pos = Vector3.new(4299.07, 44.31, -6897.23)},
+    {name = "Condenada 3", pos = Vector3.new(4345.58, 74.50, -7019.68)},
+    {name = "Condenada 4", pos = Vector3.new(4437.02, 95.86, -6966.37)},
+    {name = "Condenada 5", pos = Vector3.new(4499.72, 104.85, -7015.65)},
+    {name = "Condenada 6", pos = Vector3.new(4450.35, 106.52, -7039.21)}
+}
+
+-- Painel principal
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 260, 0, 60)
+frame.Position = UDim2.new(0.5, -130, 0.85, 0)
+frame.AnchorPoint = Vector2.new(0.5, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BackgroundTransparency = 0.15
+frame.BorderSizePixel = 0
+frame.ClipsDescendants = true
+frame.Parent = gui
+
+local uiCorner = Instance.new("UICorner", frame)
+uiCorner.CornerRadius = UDim.new(0, 12)
+
+-- Título
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -50, 0, 28)
+title.Position = UDim2.new(0, 6, 0, 6)
+title.BackgroundTransparency = 1
+title.Text = "Teleporte — Escolha"
+title.TextScaled = true
+title.TextColor3 = Color3.new(1, 1, 1)
+title.Font = Enum.Font.SourceSansSemibold
+title.Parent = frame
+
+-- Botão abrir/fechar
+local openBtn = Instance.new("TextButton")
+openBtn.Size = UDim2.new(0, 36, 0, 36)
+openBtn.Position = UDim2.new(1, -42, 0, 12)
+openBtn.AnchorPoint = Vector2.new(1, 0)
+openBtn.Text = "+"
+openBtn.Font = Enum.Font.SourceSansBold
+openBtn.TextScaled = true
+openBtn.BackgroundTransparency = 0.1
+openBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+openBtn.TextColor3 = Color3.new(1,1,1)
+openBtn.Parent = frame
+
+local openCorner = Instance.new("UICorner", openBtn)
+openCorner.CornerRadius = UDim.new(0, 8)
+
+-- Lista de botões
+local listFrame = Instance.new("Frame")
+listFrame.Size = UDim2.new(1, 0, 0, #teleports * 46)
+listFrame.Position = UDim2.new(0, 0, 0, 60)
+listFrame.BackgroundTransparency = 1
+listFrame.Visible = false
+listFrame.Parent = frame
+
+local uiListLayout = Instance.new("UIListLayout", listFrame)
+uiListLayout.Padding = UDim.new(0, 6)
+uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+-- Função de teleporte
+local function teleportTo(pos)
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hrp = char:WaitForChild("HumanoidRootPart")
+    local target = pos + Vector3.new(0, 3, 0) -- sobe um pouco
+    local tween = TweenService:Create(hrp, tweenInfo, {CFrame = CFrame.new(target)})
+    tween:Play()
 end
 
--- Loop
-task.spawn(function()
-    while true do
-        task.wait(0.1)
-        if ativo then
-            usarItem("Lasso")
-            usarItem("Harvester")
-        end
+-- Criar botões dinamicamente
+for i, info in ipairs(teleports) do
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, -12, 0, 40)
+    b.Position = UDim2.new(0, 6, 0, (i - 1) * 46)
+    b.BackgroundTransparency = 0.08
+    b.BackgroundColor3 = Color3.fromRGB(60,60,60)
+    b.BorderSizePixel = 0
+    b.Text = info.name
+    b.Font = Enum.Font.SourceSans
+    b.TextSize = 18
+    b.TextColor3 = Color3.new(1, 1, 1)
+    b.Parent = listFrame
+
+    local corner = Instance.new("UICorner", b)
+    corner.CornerRadius = UDim.new(0, 8)
+
+    b.MouseButton1Click:Connect(function()
+        teleportTo(info.pos)
+    end)
+end
+
+-- Abrir/fechar painel
+local open = false
+openBtn.MouseButton1Click:Connect(function()
+    open = not open
+    if open then
+        local newSize = UDim2.new(0, 260, 0, 60 + listFrame.Size.Y.Offset)
+        TweenService:Create(frame, TweenInfo.new(0.25), {Size = newSize}):Play()
+        listFrame.Visible = true
+        openBtn.Text = "×"
+    else
+        local newSize = UDim2.new(0, 260, 0, 60)
+        TweenService:Create(frame, TweenInfo.new(0.25), {Size = newSize}):Play()
+        task.delay(0.26, function() listFrame.Visible = false end)
+        openBtn.Text = "+"
     end
 end)
 
--- Toggle botão
-toggleBtn.MouseButton1Click:Connect(function()
-    ativo = not ativo
-    if ativo then
-        toggleBtn.Text = "Desativar Farm"
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-    else
-        toggleBtn.Text = "Ativar Farm"
-        toggleBtn.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+-- Drag to move (desktop + mobile/touch)
+local dragging, dragStart, startPos
+
+local function updateDrag(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        frame.Position = UDim2.new(
+            0, math.clamp(startPos.X.Offset + delta.X, 0, gui.AbsoluteSize.X - frame.Size.X.Offset),
+            0, math.clamp(startPos.Y.Offset + delta.Y, 0, gui.AbsoluteSize.Y - frame.Size.Y.Offset)
+        )
+    end
+end
+
+frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or
+       input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End or input.UserInputState == Enum.UserInputState.Cancel then
+                dragging = false
+            end
+        end)
     end
 end)
-]])
+
+frame.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+        updateDrag(input)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+        updateDrag(input)
+    end
+end)
