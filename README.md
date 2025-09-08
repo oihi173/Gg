@@ -1,4 +1,4 @@
--- Roblox Lua Script: Teleport Panel with Open/Close & Drag (11 teleport locations, loadstring unified)
+-- Roblox Lua Script: Teleport Panel with Open/Close & Drag (11 teleport locations)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -15,7 +15,7 @@ gui.Parent = playerGui
 
 local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
--- posições de teleporte (unified, 11 locations)
+-- posições de teleporte (11 locations)
 local teleports = {
     {name = "Condenada 1", pos = Vector3.new(4253.15, 29.67, -6964.59)},
     {name = "Condenada 2", pos = Vector3.new(4299.07, 44.31, -6897.23)},
