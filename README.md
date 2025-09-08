@@ -1,4 +1,4 @@
--- Roblox Lua Script: Teleport Panel with Open/Close & Drag (11 teleport locations)
+-- Roblox Lua Script: Teleport Panel with Scroll + Drag (11 teleport locations)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -15,7 +15,7 @@ gui.Parent = playerGui
 
 local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
--- posições de teleporte (11 locations)
+-- posições de teleporte
 local teleports = {
     {name = "Condenada 1", pos = Vector3.new(4253.15, 29.67, -6964.59)},
     {name = "Condenada 2", pos = Vector3.new(4299.07, 44.31, -6897.23)},
@@ -33,7 +33,7 @@ local teleports = {
 -- Painel principal
 local frame = Instance.new("Frame")
 frame.Size = UDim2.new(0, 260, 0, 60)
-frame.Position = UDim2.new(0.5, -130, 0.85, 0)
+frame.Position = UDim2.new(0.5, -130, 0.7, 0)
 frame.AnchorPoint = Vector2.new(0.5, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BackgroundTransparency = 0.15
@@ -71,13 +71,16 @@ openBtn.Parent = frame
 local openCorner = Instance.new("UICorner", openBtn)
 openCorner.CornerRadius = UDim.new(0, 8)
 
--- Lista de botões
-local listFrame = Instance.new("Frame")
-listFrame.Size = UDim2.new(1, 0, 0, #teleports * 46)
+-- ScrollingFrame para lista
+local listFrame = Instance.new("ScrollingFrame")
+listFrame.Size = UDim2.new(1, 0, 0, 250) -- altura máxima visível
 listFrame.Position = UDim2.new(0, 0, 0, 60)
 listFrame.BackgroundTransparency = 1
+listFrame.BorderSizePixel = 0
+listFrame.ScrollBarThickness = 6
 listFrame.Visible = false
 listFrame.Parent = frame
+listFrame.CanvasSize = UDim2.new(0, 0, 0, #teleports * 46)
 
 local uiListLayout = Instance.new("UIListLayout", listFrame)
 uiListLayout.Padding = UDim.new(0, 6)
@@ -93,10 +96,9 @@ local function teleportTo(pos)
 end
 
 -- Criar botões dinamicamente
-for i, info in ipairs(teleports) do
+for _, info in ipairs(teleports) do
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(1, -12, 0, 40)
-    b.Position = UDim2.new(0, 6, 0, (i - 1) * 46)
     b.BackgroundTransparency = 0.08
     b.BackgroundColor3 = Color3.fromRGB(60,60,60)
     b.BorderSizePixel = 0
@@ -119,19 +121,17 @@ local open = false
 openBtn.MouseButton1Click:Connect(function()
     open = not open
     if open then
-        local newSize = UDim2.new(0, 260, 0, 60 + listFrame.Size.Y.Offset)
-        TweenService:Create(frame, TweenInfo.new(0.25), {Size = newSize}):Play()
+        TweenService:Create(frame, TweenInfo.new(0.25), {Size = UDim2.new(0, 260, 0, 320)}):Play()
         listFrame.Visible = true
         openBtn.Text = "×"
     else
-        local newSize = UDim2.new(0, 260, 0, 60)
-        TweenService:Create(frame, TweenInfo.new(0.25), {Size = newSize}):Play()
+        TweenService:Create(frame, TweenInfo.new(0.25), {Size = UDim2.new(0, 260, 0, 60)}):Play()
         task.delay(0.26, function() listFrame.Visible = false end)
         openBtn.Text = "+"
     end
 end)
 
--- Drag to move (desktop + mobile/touch)
+-- Drag (desktop + mobile/touch)
 local dragging, dragStart, startPos
 
 local function updateDrag(input)
