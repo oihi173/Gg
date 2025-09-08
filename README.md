@@ -1,4 +1,4 @@
--- Roblox Lua Script: Teleport Panel + Scroll + Drag + Seat support + Auto Teleport
+-- Roblox Lua Script: Teleport Panel + Scroll + Drag + Seat support + Auto Teleport Sequencial
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -14,7 +14,7 @@ gui.Parent = playerGui
 
 local tweenInfo = TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
 
--- posições de teleporte
+-- Posições de teleporte
 local teleports = {
     {name = "Condenada 1", pos = Vector3.new(4253.15, 29.67, -6964.59)},
     {name = "Condenada 2", pos = Vector3.new(4299.07, 44.31, -6897.23)},
@@ -68,6 +68,7 @@ openBtn.Parent = frame
 local openCorner = Instance.new("UICorner", openBtn)
 openCorner.CornerRadius = UDim.new(0, 8)
 
+-- ScrollingFrame para lista
 local listFrame = Instance.new("ScrollingFrame")
 listFrame.Size = UDim2.new(1, 0, 0, 250)
 listFrame.Position = UDim2.new(0, 0, 0, 60)
@@ -76,13 +77,13 @@ listFrame.BorderSizePixel = 0
 listFrame.ScrollBarThickness = 6
 listFrame.Visible = false
 listFrame.Parent = frame
-listFrame.CanvasSize = UDim2.new(0, 0, 0, #teleports * 46)
+listFrame.CanvasSize = UDim2.new(0, 0, 0, #teleports * 46 + 50)
 
 local uiListLayout = Instance.new("UIListLayout", listFrame)
 uiListLayout.Padding = UDim.new(0, 6)
 uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Teleporte com suporte a cadeira
+-- Teleporte com cadeira
 local function teleportTo(pos)
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
@@ -98,8 +99,11 @@ local function teleportTo(pos)
     end
 end
 
--- Criar botões de teleport
-for _, info in ipairs(teleports) do
+-- Variável de controle do Auto Teleport
+local autoTeleporting = false
+
+-- Criar botões de teleport manual
+for i, info in ipairs(teleports) do
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(1, -12, 0, 40)
     b.BackgroundTransparency = 0.08
@@ -135,18 +139,18 @@ autoBtn.Parent = listFrame
 local corner = Instance.new("UICorner", autoBtn)
 corner.CornerRadius = UDim.new(0, 8)
 
-local autoTeleporting = false
-
+-- Função Auto Teleport Sequencial
 autoBtn.MouseButton1Click:Connect(function()
     autoTeleporting = not autoTeleporting
     autoBtn.Text = "Auto Teleport: " .. (autoTeleporting and "ON" or "OFF")
+    
     if autoTeleporting then
-        spawn(function()
+        task.spawn(function()
             while autoTeleporting do
                 for _, info in ipairs(teleports) do
                     if not autoTeleporting then break end
                     teleportTo(info.pos)
-                    task.wait(1) -- 1 segundo entre teleportes
+                    task.wait(1)
                 end
             end
         end)
@@ -181,8 +185,7 @@ local function updateDrag(input)
 end
 
 frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or
-       input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
         dragging = true
         dragStart = input.Position
         startPos = frame.Position
