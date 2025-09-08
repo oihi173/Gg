@@ -1,4 +1,4 @@
--- Roblox Lua Script: Teleport Panel with Scroll + Drag (11 teleport locations)
+-- Roblox Lua Script: Teleport Panel with Scroll + Drag + Seat support (11 teleport locations)
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -73,7 +73,7 @@ openCorner.CornerRadius = UDim.new(0, 8)
 
 -- ScrollingFrame para lista
 local listFrame = Instance.new("ScrollingFrame")
-listFrame.Size = UDim2.new(1, 0, 0, 250) -- altura máxima visível
+listFrame.Size = UDim2.new(1, 0, 0, 250)
 listFrame.Position = UDim2.new(0, 0, 0, 60)
 listFrame.BackgroundTransparency = 1
 listFrame.BorderSizePixel = 0
@@ -86,13 +86,24 @@ local uiListLayout = Instance.new("UIListLayout", listFrame)
 uiListLayout.Padding = UDim.new(0, 6)
 uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Função de teleporte
+-- Função de teleporte (inclui cadeira se estiver sentado)
 local function teleportTo(pos)
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
-    local target = pos + Vector3.new(0, 3, 0)
-    local tween = TweenService:Create(hrp, tweenInfo, {CFrame = CFrame.new(target)})
-    tween:Play()
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+
+    if humanoid.SeatPart then
+        -- Teleporta a cadeira
+        local seat = humanoid.SeatPart
+        local target = pos + Vector3.new(0, 3, 0)
+        local tween = TweenService:Create(seat, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = CFrame.new(target)})
+        tween:Play()
+    else
+        -- Teleporta personagem normalmente
+        local target = pos + Vector3.new(0, 3, 0)
+        local tween = TweenService:Create(hrp, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = CFrame.new(target)})
+        tween:Play()
+    end
 end
 
 -- Criar botões dinamicamente
@@ -131,7 +142,7 @@ openBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Drag (desktop + mobile/touch)
+-- Drag (desktop + mobile)
 local dragging, dragStart, startPos
 
 local function updateDrag(input)
