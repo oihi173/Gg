@@ -1,4 +1,4 @@
--- Roblox Lua Script: Teleport Panel with Scroll + Drag + Seat support (11 teleport locations)
+-- Roblox Lua Script: Teleport Panel + Scroll + Drag + Seat support + Auto Teleport
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -6,7 +6,6 @@ local UserInputService = game:GetService("UserInputService")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 
--- GUI principal
 local gui = Instance.new("ScreenGui")
 gui.Name = "TeleportGUI"
 gui.ResetOnSpawn = false
@@ -44,7 +43,6 @@ frame.Parent = gui
 local uiCorner = Instance.new("UICorner", frame)
 uiCorner.CornerRadius = UDim.new(0, 12)
 
--- Título
 local title = Instance.new("TextLabel")
 title.Size = UDim2.new(1, -50, 0, 28)
 title.Position = UDim2.new(0, 6, 0, 6)
@@ -55,7 +53,6 @@ title.TextColor3 = Color3.new(1, 1, 1)
 title.Font = Enum.Font.SourceSansSemibold
 title.Parent = frame
 
--- Botão abrir/fechar
 local openBtn = Instance.new("TextButton")
 openBtn.Size = UDim2.new(0, 36, 0, 36)
 openBtn.Position = UDim2.new(1, -42, 0, 12)
@@ -71,7 +68,6 @@ openBtn.Parent = frame
 local openCorner = Instance.new("UICorner", openBtn)
 openCorner.CornerRadius = UDim.new(0, 8)
 
--- ScrollingFrame para lista
 local listFrame = Instance.new("ScrollingFrame")
 listFrame.Size = UDim2.new(1, 0, 0, 250)
 listFrame.Position = UDim2.new(0, 0, 0, 60)
@@ -86,27 +82,23 @@ local uiListLayout = Instance.new("UIListLayout", listFrame)
 uiListLayout.Padding = UDim.new(0, 6)
 uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Função de teleporte (inclui cadeira se estiver sentado)
+-- Teleporte com suporte a cadeira
 local function teleportTo(pos)
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
     local humanoid = char:FindFirstChildOfClass("Humanoid")
 
     if humanoid.SeatPart then
-        -- Teleporta a cadeira
         local seat = humanoid.SeatPart
         local target = pos + Vector3.new(0, 3, 0)
-        local tween = TweenService:Create(seat, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = CFrame.new(target)})
-        tween:Play()
+        TweenService:Create(seat, tweenInfo, {CFrame = CFrame.new(target)}):Play()
     else
-        -- Teleporta personagem normalmente
         local target = pos + Vector3.new(0, 3, 0)
-        local tween = TweenService:Create(hrp, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {CFrame = CFrame.new(target)})
-        tween:Play()
+        TweenService:Create(hrp, tweenInfo, {CFrame = CFrame.new(target)}):Play()
     end
 end
 
--- Criar botões dinamicamente
+-- Criar botões de teleport
 for _, info in ipairs(teleports) do
     local b = Instance.new("TextButton")
     b.Size = UDim2.new(1, -12, 0, 40)
@@ -127,12 +119,46 @@ for _, info in ipairs(teleports) do
     end)
 end
 
+-- Botão Auto Teleport
+local autoBtn = Instance.new("TextButton")
+autoBtn.Size = UDim2.new(1, -12, 0, 40)
+autoBtn.Position = UDim2.new(0, 6, 0, (#teleports * 46) + 10)
+autoBtn.BackgroundTransparency = 0.08
+autoBtn.BackgroundColor3 = Color3.fromRGB(80, 50, 50)
+autoBtn.BorderSizePixel = 0
+autoBtn.Text = "Auto Teleport: OFF"
+autoBtn.Font = Enum.Font.SourceSansBold
+autoBtn.TextSize = 18
+autoBtn.TextColor3 = Color3.new(1, 1, 1)
+autoBtn.Parent = listFrame
+
+local corner = Instance.new("UICorner", autoBtn)
+corner.CornerRadius = UDim.new(0, 8)
+
+local autoTeleporting = false
+
+autoBtn.MouseButton1Click:Connect(function()
+    autoTeleporting = not autoTeleporting
+    autoBtn.Text = "Auto Teleport: " .. (autoTeleporting and "ON" or "OFF")
+    if autoTeleporting then
+        spawn(function()
+            while autoTeleporting do
+                for _, info in ipairs(teleports) do
+                    if not autoTeleporting then break end
+                    teleportTo(info.pos)
+                    task.wait(1) -- 1 segundo entre teleportes
+                end
+            end
+        end)
+    end
+end)
+
 -- Abrir/fechar painel
 local open = false
 openBtn.MouseButton1Click:Connect(function()
     open = not open
     if open then
-        TweenService:Create(frame, TweenInfo.new(0.25), {Size = UDim2.new(0, 260, 0, 320)}):Play()
+        TweenService:Create(frame, TweenInfo.new(0.25), {Size = UDim2.new(0, 260, 0, 360)}):Play()
         listFrame.Visible = true
         openBtn.Text = "×"
     else
@@ -142,9 +168,8 @@ openBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Drag (desktop + mobile)
+-- Drag
 local dragging, dragStart, startPos
-
 local function updateDrag(input)
     if dragging then
         local delta = input.Position - dragStart
@@ -170,15 +195,13 @@ frame.InputBegan:Connect(function(input)
 end)
 
 frame.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch) then
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         updateDrag(input)
     end
 end)
 
 UserInputService.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch) then
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         updateDrag(input)
     end
 end)
